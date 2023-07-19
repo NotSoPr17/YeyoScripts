@@ -1,0 +1,178 @@
+-- WorldGuard 1.1
+-- By YeyoCore UID 2769323, extension by NotSoPr17 UID 75820841
+-- Tell me if there's any bug or you have any feedback
+-- With this code, you can prevent unauthorized players from playing your maps
+-- This can be useful to test your maps online or provide exclusive access to friends
+
+-- SET UP Section
+AuthPlayers = {} -- Do not modify
+AuthPasses = {} -- Do not modify
+
+-- Instructions:
+-- 1. Scroll down to the SET UP Section and add the names of the authorized players.
+--    They will be able to host without inputting any password. Remember to add your own name there.
+-- 2. Change the variable "AuthPassword" to the desired password.
+-- 3. Set "AuthTimeUp" to change the maximum time in which players can input a password.
+
+-- Password Set Up
+AUTHPREFIX = "/"
+AuthPassword = "NuevoPass" -- Set here the password
+AuthTimeUp = 60 -- Max seconds to input password
+
+
+-- Authorized UIDs
+AuthPlayers[1] = 1002769323 -- Map creator UID (Here your uid) --
+AuthPlayers[2] = 75820841 -- Extra auth UID 1 Por alguna razon hay que añadir un 10 antes de la uid para que funcione (en mi caso)
+AuthPlayers[3] = 2769323 -- Extra auth UID 2
+AuthPlayers[4] = 2769324 -- Extra auth UID 3 (modify the UID as needed)
+AuthPlayers[5] = 2769325 -- Extra auth UID 4 (modify the UID as needed)
+
+AuthPasses[1] = "VisitantePass"
+AuthPasses[2] = "TesterPass"
+AuthPasses[3] = "ModPass"
+AuthPasses[4] = AuthPassword
+
+-- DO NOT MODIFY ANYTHING BELOW THIS LINE
+
+AUTH = false
+AUTHTimerDeleted = false
+AUTHMAX = AuthTimeUp
+AUTHPASS = false
+AuthEndgame = false
+AUTHName = "#c7D89FF⊗MapAuth"
+reth, Hostuin = Player:getHostUin()
+retl, LocalPlayeruin = Player:getMainPlayerUin()
+
+function BuscarValor(tabla, valor)
+    for _, v in ipairs(tabla) do
+        if v == valor then
+            return true
+        end
+    end
+    return false
+end
+
+function Checkuin() -- Arreglar
+    print("Localplayeruin: " + Localplayeruin.. "Checkforlocal: "+ Checkforlocal)
+    print("Hostuin: " + Hostuin.. "Checkforhost: " + Checkforhost)
+    
+    local Checkforlocal = BuscarValor(AuthPlayers, LocalPlayeruin)
+    local Checkforhost = BuscarValor(AuthPlayers, Hostuin)
+    
+    if Checkforlocal or Checkforhost then
+        AUTH = true
+        return true
+    else
+        return false
+    end
+end
+
+function AuthhandlerTimerIni() --Sin cambios
+    rettimer, AuthhandlerTimer = MiniTimer:createTimer(AUTHName, nil, false)
+    MiniTimer:startBackwardTimer(AuthhandlerTimer, AuthTimeUp, false)
+    local _, _, allPlayers = World:getAllPlayers(-1)
+    MiniTimer:showTimerTips(allPlayers, AuthhandlerTimer, AUTHName.." ", true)
+end
+
+ScriptSupportEvent:registerEvent([=[Game.Start]=], AuthhandlerTimerIni)
+
+function AuthhandlerTimerChange(e) -- Sin cambios
+    if AUTH == true and AUTHTimerDeleted == true then
+        return
+    end
+    
+    if AUTH == true and AUTHTimerDeleted == false then
+        MiniTimer:deleteTimer(AuthhandlerTimer)
+        AUTHTimerDeleted = true
+        return
+    end
+    
+    if e.timerid ~= AuthhandlerTimer then
+        return
+    end
+    
+    local result, seconds = MiniTimer:getTimerTime(e.timerid)
+    local ret, uin = Player:getHostUin()
+    
+    -- Count Down
+    if seconds < 6 then
+        local timetexttimeup = seconds - 1
+        Chat:sendSystemMsg(AUTHName.." No #RPassword#n game ending in "..timetexttimeup, 0)
+        Player:notifyGameInfo2Self(ret, AUTHName.." #R#b⚠TYPE A PASSWORD NOW! #W"..timetexttimeup)
+    end
+    
+    -- No Authorization TIMEUP
+    if seconds > 1 then
+        return
+    end
+    
+    if AuthEndgame == true or AUTH == true then
+        return
+    end
+    
+    AuthEndgame = true
+    Game:doGameEnd()
+end
+
+ScriptSupportEvent:registerEvent([=[minitimer.change]=], AuthhandlerTimerChange)
+
+function AuthPlayer(e)
+    local Check = Checkuin()
+    
+    if Check then
+        AUTH = true
+        return
+    end
+    
+    local playerid = e.eventobjid
+    local AU1, AU2, AU3, AU4 = "ey", "re", AUTHName, "Y"
+    local AU5, AU6 = "oCo", " 1.0"
+    
+    Chat:sendSystemMsg("#c7D89FF//////////////////////////////////////", playerid)
+    --Chat:sendSystemMsg("#BProtected with "..AU3..AU6.." #bby "..AU4..AU1..AU5..AU2, playerid)
+    Chat:sendSystemMsg("#Y Protected with".. AUTHName.. "\n #G Worldguard by #YYeyocore(uid: 2769323) , \n #BExpansion by #Y NotSoPr17 (uid:75820841)", playerid)
+    Chat:sendSystemMsg("#R This expansion was made by an amateur coder for learning lua so expect bugs \n #G Any feedback is welcome! :) \n", playerid)
+    Chat:sendSystemMsg("#c7D89FF/////// \n #RIf you aren't on the allowlist then type the map pasword \n".. AUTHName,playerid)
+    Actor:playSoundEffectById(playerid, 10713, 100, 1, false)
+    
+end
+ScriptSupportEvent:registerEvent([=[Game.AnyPlayer.EnterGame]=], AuthPlayer)
+
+function Authhandler(playerid)
+    
+    if AUTH == true then
+        return true
+    else
+        return false
+end
+end
+
+function Passhandler(args)
+    local content = args['content']
+    local playerid = args['eventobjid']
+    local Check_pass = BuscarValor(AuthPasses, content)
+
+    if Check_pass == true then
+        AUTH = true
+    elseif Check_pass == false then
+        Player:notifyGameInfo2Self(playerid, AUTHName.." #R#b⚠WRONG PASSWORD #Wtry again#n")
+        Actor:playSoundEffectById(playerid, 10949, 100, 1, false)
+        return false
+    end
+    
+        if content == AuthPasses[4] then
+            print("Login normal") -- ==Implementar==
+            
+        elseif content == AuthPasses[1] then
+            print("Login Visitante") -- ==Implementar==
+            
+        elseif content == AuthPasses[2] then
+            print("Login Tester") -- ==Implementar==
+            
+        elseif content == AuthPasses[3] then
+            print("Login especial") -- ==Implementar==
+                
+    end
+end
+
+ScriptSupportEvent:registerEvent([=[Player.NewInputContent]=], Passhandler)
